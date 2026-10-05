@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | TCP Handshake Simulator - CN Lab Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="login-body">
+
+    <!-- Background Decorative Network Particles -->
+    <div class="network-bg-grid"></div>
+
+    <div class="login-container">
+        
+        <!-- Brand / Project Badge -->
+        <div class="login-header-section">
+            <div class="badge-wrapper">
+                <span class="badge badge-primary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                        <path d="M2 12h20"></path>
+                    </svg>
+                    Computer Networks Lab Portal
+                </span>
+                <span class="badge badge-subtle">TCP / IP Protocol Suite</span>
+            </div>
+            <h1 class="login-title">TCP Simulator Portal</h1>
+            <p class="login-subtitle">Sign in to access the TCP Three-Way Handshake Interactive Simulator</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="card login-card">
+            
+            <!-- Flash Alert Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert-box alert-{{ category }}">
+                            <span class="alert-icon">
+                                {% if category == 'error' or category == 'danger' %}
+                                    &#9888;
+                                {% else %}
+                                    &#10003;
+                                {% endif %}
+                            </span>
+                            <span class="alert-text">{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('login') }}" method="POST" class="login-form" id="loginForm">
+                
+                <!-- Roll No / Username -->
+                <div class="form-group">
+                    <label for="username" class="form-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Roll Number / Student ID / Username
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="form-input" 
+                            placeholder="e.g. 2024CS101 or student" 
+                            required 
+                            autocomplete="username"
+                            value="{{ request.form.username if request.form.username else '' }}"
+                        >
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <div class="label-row">
+                        <label for="password" class="form-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            Password
+                        </label>
+                    </div>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            placeholder="Enter password" 
+                            required 
+                            autocomplete="current-password"
+                        >
+                    </div>
+                </div>
+
+                <!-- Role Selector -->
+                <div class="form-group">
+                    <label for="role" class="form-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Portal Role
+                    </label>
+                    <select id="role" name="role" class="form-select">
+                        <option value="Student">Student (Lab Evaluator)</option>
+                        <option value="Faculty">Faculty / Examiner</option>
+                        <option value="Guest">Guest Viewer</option>
+                    </select>
+                </div>
+
+                <!-- Primary Submit Button -->
+                <button type="submit" class="btn btn-primary btn-block">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                    Sign In to Simulator
+                </button>
+
+                <!-- Quick One-Click Demo Access -->
+                <div class="divider">
+                    <span>or quick access</span>
+                </div>
+
+                <div class="quick-demo-buttons">
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-quick-student">
+                        <span class="btn-emoji">&#128187;</span> Quick Student Demo Login
+                    </button>
+                    <button type="button" class="btn btn-outline btn-block" id="btn-quick-faculty">
+                        <span class="btn-emoji">&#128421;</span> Quick Faculty / Viva Demo
+                    </button>
+                </div>
+
+            </form>
+
+            <!-- Demo Credentials Helper Callout -->
+            <div class="credentials-helper">
+                <div class="helper-header">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    Default Demo Credentials:
+                </div>
+                <div class="cred-chips">
+                    <div class="cred-chip" onclick="fillCredentials('student', 'network123', 'Student')">
+                        <strong>Student:</strong> <code>student</code> / <code>network123</code>
+                    </div>
+                    <div class="cred-chip" onclick="fillCredentials('faculty', 'admin123', 'Faculty')">
+                        <strong>Faculty:</strong> <code>faculty</code> / <code>admin123</code>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer Note -->
+        <p class="login-footer-text">
+            Computer Networks Lab Project &bull; TCP Three-Way Handshake Visualizer
+        </p>
+    </div>
+
+    <!-- Quick Fill Script -->
+    <script>
+        function fillCredentials(user, pass, role) {
+            document.getElementById('username').value = user;
+            document.getElementById('password').value = pass;
+            if (role) {
+                document.getElementById('role').value = role;
+            }
+        }
+
+        document.getElementById('btn-quick-student').addEventListener('click', function() {
+            fillCredentials('student', 'network123', 'Student');
+            document.getElementById('loginForm').submit();
+        });
+
+        document.getElementById('btn-quick-faculty').addEventListener('click', function() {
+            fillCredentials('faculty', 'admin123', 'Faculty');
+            document.getElementById('loginForm').submit();
+        });
+    </script>
+</body>
+</html>
