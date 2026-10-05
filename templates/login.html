@@ -132,45 +132,11 @@
                 </button>
 
                 <!-- Register Account Link -->
-                <div style="text-align: center; margin-top: 0.85rem; font-size: 0.8rem; color: var(--text-muted);">
+                <div style="text-align: center; margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-muted);">
                     New Student or Faculty? <a href="{{ url_for('register') }}" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">Register in Database</a>
                 </div>
 
-                <!-- Quick One-Click Demo Access -->
-                <div class="divider">
-                    <span>or quick access</span>
-                </div>
-
-                <div class="quick-demo-buttons">
-                    <button type="button" class="btn btn-secondary btn-block" id="btn-quick-student">
-                        <span class="btn-emoji">&#128187;</span> Quick Student Demo Login
-                    </button>
-                    <button type="button" class="btn btn-outline btn-block" id="btn-quick-faculty">
-                        <span class="btn-emoji">&#128421;</span> Quick Faculty / Viva Demo
-                    </button>
-                </div>
-
             </form>
-
-            <!-- Demo Credentials Helper Callout -->
-            <div class="credentials-helper">
-                <div class="helper-header">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    Default Demo Credentials:
-                </div>
-                <div class="cred-chips">
-                    <div class="cred-chip" onclick="fillCredentials('student', 'network123', 'Student')">
-                        <strong>Student:</strong> <code>student</code> / <code>network123</code>
-                    </div>
-                    <div class="cred-chip" onclick="fillCredentials('faculty', 'admin123', 'Faculty')">
-                        <strong>Faculty:</strong> <code>faculty</code> / <code>admin123</code>
-                    </div>
-                </div>
-            </div>
 
         </div>
 
@@ -180,26 +146,6 @@
         </p>
     </div>
 
-    <!-- Quick Fill Script -->
-    <script>
-        function fillCredentials(user, pass, role) {
-            document.getElementById('username').value = user;
-            document.getElementById('password').value = pass;
-            if (role) {
-                document.getElementById('role').value = role;
-            }
-        }
-
-        document.getElementById('btn-quick-student').addEventListener('click', function() {
-            fillCredentials('student', 'network123', 'Student');
-            document.getElementById('loginForm').submit();
-        });
-
-        document.getElementById('btn-quick-faculty').addEventListener('click', function() {
-            fillCredentials('faculty', 'admin123', 'Faculty');
-            document.getElementById('loginForm').submit();
-        });
-    </script>
 </body>
 </html>
 
