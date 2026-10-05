@@ -576,14 +576,6 @@
                         </tbody>
                     </table>
                 </div>
-
-                <div class="seq-callout">
-                    <div class="callout-icon">&#128161;</div>
-                    <div class="callout-body">
-                        <strong>Why do the Acknowledgment Numbers increase by +1?</strong>
-                        <p>In TCP, even though a pure SYN or FIN control segment carries 0 bytes of application user data, RFC 793 defines that SYN and FIN control flags logically consume exactly <strong>one sequence number</strong>. Therefore, the receiver must increment the acknowledgment by 1 (i.e., <code>Ack = Seq + 1</code>) to confirm receipt of that control flag.</p>
-                    </div>
-                </div>
             </div>
         </section>
 
