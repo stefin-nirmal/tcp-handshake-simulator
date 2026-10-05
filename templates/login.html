@@ -36,20 +36,16 @@
         <!-- Login Card -->
         <div class="card login-card">
             
-            <!-- Flash Alert Messages -->
+            <!-- Flash Alert Messages (Errors Only) -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
+                        {% if category in ['error', 'danger'] %}
                         <div class="alert-box alert-{{ category }}">
-                            <span class="alert-icon">
-                                {% if category == 'error' or category == 'danger' %}
-                                    &#9888;
-                                {% else %}
-                                    &#10003;
-                                {% endif %}
-                            </span>
+                            <span class="alert-icon">&#9888;</span>
                             <span class="alert-text">{{ message }}</span>
                         </div>
+                        {% endif %}
                     {% endfor %}
                 {% endif %}
             {% endwith %}

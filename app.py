@@ -264,7 +264,6 @@ def login():
                 'username': uname,
                 'role': role
             }
-            flash(f'Signed in successfully as {uname} ({role})!', 'success')
             return redirect(url_for('index'))
 
         # Convenience for student evaluation: allow auto-creation if len >= 3
@@ -289,11 +288,10 @@ def login():
                 'username': username,
                 'role': selected_role
             }
-            flash(f'Signed in successfully as {username} ({selected_role})!', 'success')
             return redirect(url_for('index'))
 
         conn.close()
-        flash('Invalid credentials. Use student/network123 or click Quick Demo Access.', 'error')
+        flash('Invalid credentials. Please check your username and password.', 'error')
 
     return render_template('login.html')
 
@@ -354,7 +352,6 @@ def register():
             'username': username,
             'role': role
         }
-        flash(f'Account created successfully! Welcome, {username}.', 'success')
         return redirect(url_for('index'))
 
     return render_template('register.html')
@@ -364,7 +361,6 @@ def register():
 def logout():
     """Logs the user out and clears session."""
     session.pop('user', None)
-    flash('You have been logged out successfully.', 'info')
     return redirect(url_for('login'))
 
 
