@@ -509,6 +509,10 @@
         // Reveal Success Banner
         bannerEstablished.classList.add('show');
 
+        // Log Experiment Run to Database
+        const currentMode = state.isAutoPlaying ? 'Automatic Handshake' : 'Step-by-Step Handshake';
+        logSimulationToDB(currentMode, 'ESTABLISHED', 1000, 5000, 3, 3);
+
         // Update button states
         btnStart.disabled = true;
         btnStep.disabled = true;
@@ -603,6 +607,9 @@
 
                 bannerFailed.classList.add('show');
                 stageHint.textContent = 'Handshake failed: Connection timed out.';
+
+                // Log Failure Experiment to Database
+                logSimulationToDB('Timeout Failure Test', 'TIMEOUT', 1000, 5000, 1, 0);
 
                 state.isAnimating = false;
                 btnStart.disabled = true;
@@ -750,6 +757,77 @@
     }
 
     // -------------------------------------------------------------------------
+    // Database Integration (MySQL / SQLite)
+    // -------------------------------------------------------------------------
+    function logSimulationToDB(mode, status, clientIsn, serverIsn, sent, received) {
+        fetch('/api/log_simulation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                mode: mode,
+                status: status,
+                client_isn: clientIsn,
+                server_isn: serverIsn,
+                packets_sent: sent,
+                packets_received: received
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log('Database Log Saved:', data);
+            loadDatabaseRecords();
+        })
+        .catch(err => console.warn('Could not log to database:', err));
+    }
+
+    function loadDatabaseRecords() {
+        const tbody = document.getElementById('db-records-tbody');
+        const badge = document.getElementById('db-engine-badge');
+        if (!tbody) return;
+
+        fetch('/api/records')
+            .then(res => res.json())
+            .then(data => {
+                if (badge && data.engine) {
+                    badge.textContent = data.engine;
+                }
+                const records = data.records || [];
+                if (records.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No experiment records logged in database yet. Run a handshake simulation to record data!</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = records.map(r => {
+                    const statusBadge = r.status === 'ESTABLISHED' 
+                        ? '<span style="background: rgba(16,185,129,0.15); color: #34d399; padding: 2px 8px; border-radius: 4px; font-weight:700; font-size: 0.72rem;">ESTABLISHED</span>'
+                        : '<span style="background: rgba(244,63,94,0.15); color: #f87171; padding: 2px 8px; border-radius: 4px; font-weight:700; font-size: 0.72rem;">TIMEOUT</span>';
+                    
+                    return `
+                        <tr>
+                            <td class="font-code">#${r.id}</td>
+                            <td><strong>${escapeHtml(r.username)}</strong></td>
+                            <td><span class="badge badge-subtle" style="font-size: 0.65rem;">${escapeHtml(r.role)}</span></td>
+                            <td class="font-code">${escapeHtml(r.mode)}</td>
+                            <td class="font-code text-cyan">${r.client_isn}</td>
+                            <td class="font-code text-purple">${r.server_isn}</td>
+                            <td>${statusBadge}</td>
+                            <td class="font-code">${r.packets_sent} sent / ${r.packets_received} rcvd</td>
+                            <td style="font-size: 0.75rem; color: var(--text-muted);">${r.created_at}</td>
+                        </tr>
+                    `;
+                }).join('');
+            })
+            .catch(err => {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #f87171; padding: 1rem;">Failed to load records from database.</td></tr>';
+            });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // -------------------------------------------------------------------------
     // Event Listeners
     // -------------------------------------------------------------------------
     btnStart.addEventListener('click', startFullSimulation);
@@ -758,6 +836,11 @@
     btnReplay.addEventListener('click', startFullSimulation);
     btnFail.addEventListener('click', simulateConnectionFailure);
     btnRetryFail.addEventListener('click', startFullSimulation);
+
+    const btnRefreshDb = document.getElementById('btn-refresh-db');
+    if (btnRefreshDb) {
+        btnRefreshDb.addEventListener('click', loadDatabaseRecords);
+    }
 
     // Keyboard Shortcuts (Space: Start/Next Step, R: Reset, F: Fail)
     window.addEventListener('keydown', (e) => {
@@ -789,8 +872,9 @@
         }
     });
 
-    // Initial console banner
+    // Initial console banner & Load DB records
     console.log("%c TCP Three-Way Handshake Simulator Initialized ", "background: #0284c7; color: #fff; font-weight: bold; padding: 4px;");
+    loadDatabaseRecords();
 
 })();
 

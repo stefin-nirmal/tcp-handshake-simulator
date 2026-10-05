@@ -35,27 +35,30 @@ This web application visually simulates this entire procedure in real-time, deta
 * **Backend:**
   * **Python 3:** Application logic.
   * **Flask:** Lightweight WSGI web framework serving static templates and `/api/info` endpoint.
-* **Database:** None required (fully self-contained).
+* **Database:**
+  * **MySQL:** Primary production database (`tcp_simulator_db` on `localhost:3306`) storing user credentials and simulation experiment records.
+  * **SQLite Fallback:** Automatic cloud fallback (`handshake_simulator.db`) for zero-configuration deployment on platforms like Vercel.
 
 ---
 
 ## 4. Project Directory Structure
 
 ```text
-cn mini project/
+tcp-handshake-simulator/
 │
-├── app.py                  # Flask backend server & REST API
-├── requirements.txt        # Python dependency manifest
+├── app.py                  # Flask backend server with MySQL database & REST API
+├── requirements.txt        # Python dependency manifest (Flask, PyMySQL)
 ├── README.md               # Complete project documentation & viva guide
+├── .gitignore              # Ignores venv/, caches, and local databases
 │
 ├── templates/
-│   └── index.html          # Web dashboard interface template
+│   ├── index.html          # Web dashboard interface with live DB records table
+│   ├── login.html          # CN Lab portal login page
+│   └── register.html       # Student / Faculty account registration page
 │
-├── static/
-│   ├── style.css           # Modern networking theme stylesheet & animations
-│   └── script.js           # Handshake animation controller & state machine
-│
-└── screenshots/            # Demonstration screenshots for lab submission
+└── static/
+    ├── style.css           # Modern networking theme stylesheet & animations
+    └── script.js           # Handshake animation controller & live DB logger
 ```
 
 ---

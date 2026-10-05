@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | TCP Handshake Simulator - CN Lab Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="login-body">
+
+    <!-- Background Decorative Network Particles -->
+    <div class="network-bg-grid"></div>
+
+    <div class="login-container">
+        
+        <!-- Brand / Project Badge -->
+        <div class="login-header-section">
+            <div class="badge-wrapper">
+                <span class="badge badge-primary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <polyline points="17 11 19 13 23 9"></polyline>
+                    </svg>
+                    Student / Faculty Registration
+                </span>
+                <span class="badge badge-subtle">MySQL Database Connected</span>
+            </div>
+            <h1 class="login-title">Create Account</h1>
+            <p class="login-subtitle">Register in the Computer Networks Lab database</p>
+        </div>
+
+        <!-- Registration Card -->
+        <div class="card login-card">
+            
+            <!-- Flash Alert Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert-box alert-{{ category }}">
+                            <span class="alert-icon">&#9888;</span>
+                            <span class="alert-text">{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('register') }}" method="POST" class="login-form">
+                
+                <!-- Roll No / Username -->
+                <div class="form-group">
+                    <label for="username" class="form-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Roll Number / Username
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="form-input" 
+                            placeholder="e.g. 2024CS205 or stefin" 
+                            required 
+                            autocomplete="username"
+                            value="{{ request.form.username if request.form.username else '' }}"
+                        >
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        Password
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            placeholder="Enter password (min 4 chars)" 
+                            required 
+                            autocomplete="new-password"
+                        >
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="confirm_password" class="form-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        Confirm Password
+                    </label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="confirm_password" 
+                            name="confirm_password" 
+                            class="form-input" 
+                            placeholder="Re-enter password" 
+                            required 
+                            autocomplete="new-password"
+                        >
+                    </div>
+                </div>
+
+                <!-- Role Selector -->
+                <div class="form-group">
+                    <label for="role" class="form-label">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Account Role
+                    </label>
+                    <select id="role" name="role" class="form-select">
+                        <option value="Student">Student</option>
+                        <option value="Faculty">Faculty / Examiner</option>
+                    </select>
+                </div>
+
+                <!-- Primary Submit Button -->
+                <button type="submit" class="btn btn-primary btn-block">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    Create Account & Continue
+                </button>
+
+                <!-- Back to Login Link -->
+                <div style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">
+                    Already have an account? <a href="{{ url_for('login') }}" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">Sign in here</a>
+                </div>
+
+            </form>
+
+        </div>
+
+        <!-- Footer Note -->
+        <p class="login-footer-text">
+            Computer Networks Lab Project &bull; MySQL Database Integration
+        </p>
+    </div>
+
+</body>
+</html>

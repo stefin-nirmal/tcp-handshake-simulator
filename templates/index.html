@@ -25,6 +25,14 @@
                         Computer Networks Mini Project
                     </span>
                     <span class="badge badge-subtle">Transport Layer (Layer 4)</span>
+                    <span class="badge badge-subtle" style="border-color: rgba(56, 189, 248, 0.35); color: var(--accent-cyan);">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                        </svg>
+                        DB: {{ db_engine }}
+                    </span>
                 </div>
 
                 {% if user %}
@@ -674,6 +682,53 @@
                     <p>
                         If only two steps were used, the server would never know if the client received its sequence number, and old delayed duplicate packets wandering the network could cause the server to mistakenly open zombie connections!
                     </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Database Lab Records Table -->
+        <section class="card db-records-section">
+            <div class="card-header">
+                <div class="card-title-group">
+                    <span class="card-icon">&#128451;</span>
+                    <h2 class="card-title">Database Records: Lab Experiment History</h2>
+                </div>
+                <div style="display: flex; gap: 0.6rem; align-items: center;">
+                    <span class="card-tag font-code" id="db-engine-badge">{{ db_engine }}</span>
+                    <button id="btn-refresh-db" class="btn btn-outline btn-sm" title="Reload from database">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M1 20v-6h6"></path>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Refresh Logs
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="seq-table-wrapper">
+                    <table class="seq-table" id="db-records-table">
+                        <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th>Student / User</th>
+                                <th>Role</th>
+                                <th>Simulation Mode</th>
+                                <th>Client ISN</th>
+                                <th>Server ISN</th>
+                                <th>Result</th>
+                                <th>Packets</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="db-records-tbody">
+                            <tr>
+                                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">
+                                    Loading database experiment logs...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
