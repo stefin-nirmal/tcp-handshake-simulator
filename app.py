@@ -436,10 +436,15 @@ def live_handshake():
     user = session.get('user', {'username': 'student', 'role': 'Student'})
     payload = request.get_json(silent=True) or {}
     simulate_failure = bool(payload.get('simulate_failure', False))
+    client_username = payload.get('username') or user.get('username', 'student')
 
     try:
         # Perform real OS socket handshake
         sock_info = perform_live_tcp_connection(simulate_failure=simulate_failure)
+        
+        # If client called from external device or passed IP, use client's remote address
+        actual_client_ip = payload.get('client_ip') or (request.remote_addr if request.remote_addr != '127.0.0.1' else sock_info['client_ip'])
+        sock_info['client_ip'] = actual_client_ip
 
         # Insert live record into MySQL
         conn, engine = get_db()
@@ -451,7 +456,7 @@ def live_handshake():
                 (username, client_ip, client_port, server_ip, server_port, client_isn, server_isn, syn_ack_num, final_ack_num, rtt_ms, socket_status, bytes_transferred)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
-                user['username'],
+                client_username,
                 sock_info['client_ip'],
                 sock_info['client_port'],
                 sock_info['server_ip'],
@@ -471,7 +476,7 @@ def live_handshake():
                 (username, client_ip, client_port, server_ip, server_port, client_isn, server_isn, syn_ack_num, final_ack_num, rtt_ms, socket_status, bytes_transferred)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
-                user['username'],
+                client_username,
                 sock_info['client_ip'],
                 sock_info['client_port'],
                 sock_info['server_ip'],
@@ -586,7 +591,7 @@ if __name__ == '__main__':
     print("  Live TCP Three-Way Handshake System")
     print("  Computer Networks Mini Project with Live Sockets & MySQL")
     print(f"  Database Engine: {DB_ENGINE}")
-    print("  Login at: http://127.0.0.1:5000/login")
-    print("  Simulator at: http://127.0.0.1:5000")
+    print("  Local Host URL:     http://127.0.0.1:5000")
+    print("  LAN Client Access:  http://0.0.0.0:5000 (Use your LAN IP)")
     print("=" * 60)
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
