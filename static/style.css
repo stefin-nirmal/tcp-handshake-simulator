@@ -2074,3 +2074,113 @@ kbd {
     color: var(--text-muted);
     margin-top: 1.25rem;
 }
+
+/* ==========================================================================
+   MySQL Database Live Records Table Styling
+   ========================================================================== */
+
+.mysql-records-card {
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+
+.badge-live-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: livePulse 2s infinite;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.mysql-table-wrapper {
+    overflow-x: auto;
+    background: var(--bg-inset);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.mysql-records-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    text-align: left;
+}
+
+.mysql-records-table th {
+    background: rgba(15, 23, 42, 0.95);
+    color: var(--text-muted);
+    font-weight: 700;
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+    letter-spacing: 0.03em;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.mysql-records-table td {
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    white-space: nowrap;
+    color: var(--text-secondary);
+}
+
+.mysql-records-table tr:hover {
+    background: rgba(56, 189, 248, 0.04);
+}
+
+.mysql-records-table tr.highlight-new-row {
+    background: rgba(56, 189, 248, 0.15) !important;
+    animation: fadeHighlight 3s ease forwards;
+}
+
+@keyframes fadeHighlight {
+    0% { background: rgba(56, 189, 248, 0.25); }
+    100% { background: transparent; }
+}
+
+.rtt-pill {
+    display: inline-block;
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--accent-cyan);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.status-tag-est {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.status-tag-fail {
+    background: rgba(244, 63, 94, 0.15);
+    color: #f87171;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}

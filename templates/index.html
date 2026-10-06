@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCP Three-Way Handshake Simulator | Computer Networks Lab</title>
+    <title>Live TCP Handshake & Network Analysis System | Computer Networks Lab</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,7 @@
                         </svg>
                         Computer Networks Mini Project
                     </span>
-                    <span class="badge badge-subtle">Transport Layer (Layer 4)</span>
+                    <span class="badge badge-subtle">Live OS Sockets (AF_INET)</span>
                     <span class="badge badge-subtle" style="border-color: rgba(56, 189, 248, 0.35); color: var(--accent-cyan);">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
@@ -53,8 +53,8 @@
                 </div>
                 {% endif %}
             </div>
-            <h1 class="main-title">TCP Three-Way Handshake Simulator</h1>
-            <p class="subtitle">Visualize how a reliable TCP connection is established between a client and server</p>
+            <h1 class="main-title">Live TCP Handshake & Analysis System</h1>
+            <p class="subtitle">Real OS Socket Connection, RFC 793 ISN Synchronization & MySQL Database Storage</p>
         </div>
     </header>
 
@@ -64,39 +64,39 @@
         <!-- Controls & Speed Toolbar -->
         <section class="toolbar-card">
             <div class="controls-group">
-                <button id="btn-start" class="btn btn-primary" title="Run full animated handshake">
+                <button id="btn-start" class="btn btn-primary" title="Execute real live OS TCP socket handshake">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                     </svg>
-                    Start Simulation
+                    ⚡ Execute Live TCP Handshake
                 </button>
-                <button id="btn-step" class="btn btn-secondary" title="Execute one handshake step at a time">
+                <button id="btn-step" class="btn btn-secondary" title="Execute one handshake step at a time with live socket data">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                     <span id="btn-step-text">Step-by-Step (Step 1)</span>
                 </button>
-                <button id="btn-reset" class="btn btn-outline" title="Reset simulator to initial state">
+                <button id="btn-reset" class="btn btn-outline" title="Reset system view to initial state">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                         <path d="M3 3v5h5"></path>
                     </svg>
                     Reset
                 </button>
-                <button id="btn-replay" class="btn btn-outline" disabled title="Replay handshake simulation">
+                <button id="btn-replay" class="btn btn-outline" disabled title="Replay previous live socket handshake">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polygon points="11 19 2 12 11 5 11 19"></polygon>
                         <polygon points="22 19 13 12 22 5 22 19"></polygon>
                     </svg>
                     Replay
                 </button>
-                <button id="btn-fail" class="btn btn-danger" title="Simulate packet drop / connection timeout">
+                <button id="btn-fail" class="btn btn-danger" title="Simulate socket timeout and record to MySQL">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="15" y1="9" x2="9" y2="15"></line>
                         <line x1="9" y1="9" x2="15" y2="15"></line>
                     </svg>
-                    Simulate Failure
+                    Simulate Socket Timeout
                 </button>
             </div>
 
@@ -164,7 +164,7 @@
                     <span class="status-dot" id="global-status-dot"></span>
                     <span class="status-text">Connection Status: <strong id="global-status-text">CLOSED</strong></span>
                 </div>
-                <div class="stage-hint" id="stage-hint">Click "Start Simulation" or "Step-by-Step" to begin</div>
+                <div class="stage-hint" id="stage-hint">Click "⚡ Execute Live TCP Handshake" to initiate real OS socket connection</div>
             </div>
 
             <!-- Visual Nodes and Network Line -->
@@ -183,15 +183,15 @@
                     <div class="node-meta">
                         <div class="meta-row">
                             <span class="meta-key">IP Address:</span>
-                            <span class="meta-val font-code">192.168.1.10</span>
+                            <span class="meta-val font-code" id="client-ip-val">127.0.0.1</span>
                         </div>
                         <div class="meta-row">
                             <span class="meta-key">Source Port:</span>
-                            <span class="meta-val font-code">5000</span>
+                            <span class="meta-val font-code" id="client-port-val">Dynamic (OS)</span>
                         </div>
                         <div class="meta-row">
                             <span class="meta-key">Initial Seq (ISN):</span>
-                            <span class="meta-val font-code" id="client-isn-val">1000</span>
+                            <span class="meta-val font-code" id="client-isn-val">RFC 793 (32-bit)</span>
                         </div>
                     </div>
                     <div class="node-state-box">
@@ -205,13 +205,13 @@
                     <div class="network-cable">
                         <div class="cable-pulse"></div>
                     </div>
-                    <div class="wire-label">Full-Duplex IP Network Channel</div>
+                    <div class="wire-label">Full-Duplex IP Network Channel (Loopback)</div>
 
                     <!-- Traveling Packet Element -->
                     <div class="flying-packet" id="flying-packet">
                         <div class="packet-body">
                             <div class="packet-badge-tag" id="packet-tag">SYN</div>
-                            <div class="packet-mini-seq" id="packet-mini-seq">Seq: 1000</div>
+                            <div class="packet-mini-seq" id="packet-mini-seq">Seq: Live</div>
                         </div>
                         <div class="packet-arrow-indicator" id="packet-arrow">&rarr;</div>
                     </div>
@@ -219,7 +219,7 @@
                     <!-- Failure Indicator Box (hidden by default) -->
                     <div class="packet-drop-box" id="packet-drop-box">
                         <div class="drop-icon">&#9888;</div>
-                        <div class="drop-text">Packet Dropped / Timeout!</div>
+                        <div class="drop-text" id="packet-drop-text">Packet Dropped / Socket Timeout!</div>
                     </div>
                 </div>
 
@@ -238,15 +238,15 @@
                     <div class="node-meta">
                         <div class="meta-row">
                             <span class="meta-key">IP Address:</span>
-                            <span class="meta-val font-code">192.168.1.20</span>
+                            <span class="meta-val font-code" id="server-ip-val">127.0.0.1</span>
                         </div>
                         <div class="meta-row">
                             <span class="meta-key">Dest Port:</span>
-                            <span class="meta-val font-code">8080</span>
+                            <span class="meta-val font-code" id="server-port-val">Dynamic (OS)</span>
                         </div>
                         <div class="meta-row">
                             <span class="meta-key">Initial Seq (ISN):</span>
-                            <span class="meta-val font-code" id="server-isn-val">5000</span>
+                            <span class="meta-val font-code" id="server-isn-val">RFC 793 (32-bit)</span>
                         </div>
                     </div>
                     <div class="node-state-box">
@@ -260,12 +260,13 @@
             <div class="banner-success" id="banner-established">
                 <div class="banner-icon">&#10003;</div>
                 <div class="banner-content">
-                    <h3 class="banner-title">&#10003; TCP CONNECTION ESTABLISHED</h3>
-                    <p class="banner-desc">Handshake completed successfully! Both endpoints have synchronized sequence numbers and are ready for bidirectional data transfer.</p>
+                    <h3 class="banner-title">&#10003; LIVE TCP CONNECTION ESTABLISHED & SAVED TO MYSQL</h3>
+                    <p class="banner-desc">Real OS kernel TCP connection completed! Latency (RTT): <strong id="banner-rtt-val" class="text-cyan">-- ms</strong> &bull; MySQL Record: <strong id="banner-record-id-val" class="text-yellow">#--</strong></p>
                     <div class="checklist-grid">
-                        <div class="check-item"><span class="check-mark">&#10003;</span> 1. SYN (Seq=1000)</div>
-                        <div class="check-item"><span class="check-mark">&#10003;</span> 2. SYN-ACK (Seq=5000, Ack=1001)</div>
-                        <div class="check-item"><span class="check-mark">&#10003;</span> 3. ACK (Seq=1001, Ack=5001)</div>
+                        <div class="check-item"><span class="check-mark">&#10003;</span> 1. SYN (Client ISN: <span id="banner-c-isn" class="font-code text-cyan">--</span>)</div>
+                        <div class="check-item"><span class="check-mark">&#10003;</span> 2. SYN-ACK (Server ISN: <span id="banner-s-isn" class="font-code text-purple">--</span>, Ack: <span id="banner-s-ack" class="font-code text-yellow">--</span>)</div>
+                        <div class="check-item"><span class="check-mark">&#10003;</span> 3. ACK (Seq: <span id="banner-c-ack-seq" class="font-code text-green">--</span>, Ack: <span id="banner-c-ack-val" class="font-code text-yellow">--</span>)</div>
+                        <div class="check-item"><span class="check-mark">&#10003;</span> 4. MySQL DB: Persisted in table <code>live_tcp_handshakes</code></div>
                     </div>
                 </div>
             </div>
@@ -274,14 +275,14 @@
             <div class="banner-failure" id="banner-failed">
                 <div class="banner-icon">&#9888;</div>
                 <div class="banner-content">
-                    <h3 class="banner-title">Connection Failed / Timeout (SYN_TIMEOUT)</h3>
-                    <p class="banner-desc">The Client sent a SYN request, but the Server did not respond within the retransmission timeout (RTO) period. The TCP connection could not be established.</p>
+                    <h3 class="banner-title">Socket Connection Timeout / Packet Dropped</h3>
+                    <p class="banner-desc" id="banner-failed-desc">Client transmitted SYN request, but socket timed out without ACK from destination. Failure event recorded in MySQL database.</p>
                     <button class="btn btn-secondary btn-sm" id="btn-retry-fail">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                             <path d="M3 3v5h5"></path>
                         </svg>
-                        Retry Handshake
+                        Execute Live Handshake
                     </button>
                 </div>
             </div>
@@ -392,9 +393,9 @@
                 <div class="card-header">
                     <div class="card-title-group">
                         <span class="card-icon">&#128202;</span>
-                        <h2 class="card-title">Network Statistics</h2>
+                        <h2 class="card-title">Live Network Statistics</h2>
                     </div>
-                    <span class="card-tag font-code">Live</span>
+                    <span class="card-tag font-code" id="stat-engine-tag">MySQL Active</span>
                 </div>
                 <div class="card-body">
                     <div class="stats-grid">
@@ -407,18 +408,18 @@
                             <div class="stat-label">Packets Received</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-number font-code" id="stat-steps">0 / 3</div>
-                            <div class="stat-label">Handshake Progress</div>
+                            <div class="stat-number font-code text-cyan" id="stat-rtt">-- ms</div>
+                            <div class="stat-label">Measured RTT (Latency)</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-number font-code" id="stat-status">CLOSED</div>
-                            <div class="stat-label">Connection Status</div>
+                            <div class="stat-number font-code text-yellow" id="stat-rec-id">#--</div>
+                            <div class="stat-label">MySQL Record ID</div>
                         </div>
                     </div>
                     <div class="protocol-badge-row">
-                        <div class="p-item"><span class="p-key">Protocol:</span> <strong class="p-val font-code">TCP (Layer 4)</strong></div>
-                        <div class="p-item"><span class="p-key">Mode:</span> <strong class="p-val font-code">Full Duplex</strong></div>
-                        <div class="p-item"><span class="p-key">Payload:</span> <strong class="p-val font-code">0 Bytes (Headers Only)</strong></div>
+                        <div class="p-item"><span class="p-key">Protocol:</span> <strong class="p-val font-code">TCP (AF_INET, SOCK_STREAM)</strong></div>
+                        <div class="p-item"><span class="p-key">Mode:</span> <strong class="p-val font-code">Live Kernel Sockets</strong></div>
+                        <div class="p-item"><span class="p-key">Database:</span> <strong class="p-val font-code">MySQL (live_tcp_handshakes)</strong></div>
                     </div>
                 </div>
             </div>
@@ -441,8 +442,8 @@
                     <div class="ladder-diagram">
                         <!-- Diagram Headers -->
                         <div class="ladder-cols">
-                            <div class="ladder-col-header client-side">&#128187; CLIENT (192.168.1.10)</div>
-                            <div class="ladder-col-header server-side">&#128421; SERVER (192.168.1.20)</div>
+                            <div class="ladder-col-header client-side">&#128187; CLIENT (<span id="ladder-c-endpoint">127.0.0.1</span>)</div>
+                            <div class="ladder-col-header server-side">&#128421; SERVER (<span id="ladder-s-endpoint">127.0.0.1</span>)</div>
                         </div>
 
                         <!-- Diagram Body with Lifelines -->
@@ -454,7 +455,7 @@
                             <div class="flow-row" id="flow-syn">
                                 <div class="flow-marker client-marker">SYN-SENT</div>
                                 <div class="flow-arrow-container to-right">
-                                    <div class="flow-label">1. SYN [Seq = 1000] &rarr;</div>
+                                    <div class="flow-label" id="flow-syn-label">1. SYN [Seq = <span id="flow-syn-seq">1000</span>] &rarr;</div>
                                     <div class="flow-line">
                                         <div class="arrowhead right-arrow"></div>
                                     </div>
@@ -466,7 +467,7 @@
                             <div class="flow-row" id="flow-synack">
                                 <div class="flow-marker client-marker">SYN-SENT</div>
                                 <div class="flow-arrow-container to-left">
-                                    <div class="flow-label">&larr; 2. SYN-ACK [Seq = 5000, Ack = 1001]</div>
+                                    <div class="flow-label" id="flow-synack-label">&larr; 2. SYN-ACK [Seq = <span id="flow-synack-seq">5000</span>, Ack = <span id="flow-synack-ack">1001</span>]</div>
                                     <div class="flow-line">
                                         <div class="arrowhead left-arrow"></div>
                                     </div>
@@ -478,7 +479,7 @@
                             <div class="flow-row" id="flow-ack">
                                 <div class="flow-marker client-marker">ESTABLISHED</div>
                                 <div class="flow-arrow-container to-right">
-                                    <div class="flow-label">3. ACK [Seq = 1001, Ack = 5001] &rarr;</div>
+                                    <div class="flow-label" id="flow-ack-label">3. ACK [Seq = <span id="flow-ack-seq">1001</span>, Ack = <span id="flow-ack-ack">5001</span>] &rarr;</div>
                                     <div class="flow-line">
                                         <div class="arrowhead right-arrow"></div>
                                     </div>
@@ -488,7 +489,7 @@
 
                             <!-- Diagram Footer / State Established -->
                             <div class="flow-established-box" id="flow-est-box">
-                                &#10003; CONNECTION ESTABLISHED (DATA TRANSFER CAN BEGIN)
+                                &#10003; LIVE CONNECTION ESTABLISHED &bull; DATA TRANSFER CHANNEL READY
                             </div>
                         </div>
                     </div>
@@ -500,13 +501,13 @@
                 <div class="card-header">
                     <div class="card-title-group">
                         <span class="card-icon">&#9201;</span>
-                        <h2 class="card-title">Simulation Timeline</h2>
+                        <h2 class="card-title">Live Socket Timeline</h2>
                     </div>
-                    <span class="card-tag font-code">Live Event Log</span>
+                    <span class="card-tag font-code">Kernel Events</span>
                 </div>
                 <div class="card-body">
                     <div class="timeline-container" id="timeline-list">
-                        <div class="timeline-empty">Timeline logs will appear here during execution...</div>
+                        <div class="timeline-empty">Live OS socket events and MySQL write logs will appear here...</div>
                     </div>
                 </div>
             </div>
@@ -518,21 +519,21 @@
             <div class="card-header">
                 <div class="card-title-group">
                     <span class="card-icon">&#128290;</span>
-                    <h2 class="card-title">Sequence & Acknowledgment Numbers</h2>
+                    <h2 class="card-title">Sequence & Acknowledgment Arithmetic</h2>
                 </div>
-                <span class="card-tag">Math & Arithmetic</span>
+                <span class="card-tag">RFC 793 Math</span>
             </div>
             <div class="card-body">
                 <div class="seq-ack-grid">
                     <div class="isn-card">
                         <div class="isn-header">Client Initial Sequence Number (ISN)</div>
-                        <div class="isn-value font-code">Seq = 1000</div>
-                        <p class="isn-desc">Generated randomly by client OS to prevent packet collisions and replay attacks.</p>
+                        <div class="isn-value font-code" id="math-client-isn">Seq = 1000</div>
+                        <p class="isn-desc">Generated dynamically via 32-bit PRNG to prevent packet collisions and replay attacks.</p>
                     </div>
                     <div class="isn-card">
                         <div class="isn-header">Server Initial Sequence Number (ISN)</div>
-                        <div class="isn-value font-code">Seq = 5000</div>
-                        <p class="isn-desc">Generated independently by server OS for the return byte stream channel.</p>
+                        <div class="isn-value font-code" id="math-server-isn">Seq = 5000</div>
+                        <p class="isn-desc">Generated independently by server OS for the reverse byte stream channel.</p>
                     </div>
                 </div>
 
@@ -553,26 +554,83 @@
                                 <td><span class="step-badge">1</span></td>
                                 <td><strong class="font-code text-cyan">SYN</strong></td>
                                 <td>Client &rarr; Server</td>
-                                <td class="font-code">1000</td>
+                                <td class="font-code" id="table-syn-seq">1000</td>
                                 <td class="font-code text-muted">-</td>
-                                <td>Client proposes starting byte at 1000.</td>
+                                <td>Client initiates connection with random starting byte (ISN).</td>
                             </tr>
                             <tr id="row-synack">
                                 <td><span class="step-badge">2</span></td>
                                 <td><strong class="font-code text-purple">SYN-ACK</strong></td>
                                 <td>Server &rarr; Client</td>
-                                <td class="font-code">5000</td>
-                                <td class="font-code text-yellow">1001</td>
-                                <td>Ack = 1000 + 1 (Acknowledge client's SYN, which consumes 1 sequence number).</td>
+                                <td class="font-code" id="table-synack-seq">5000</td>
+                                <td class="font-code text-yellow" id="table-synack-ack">1001</td>
+                                <td>Ack = Client ISN + 1 (Acknowledges client SYN byte).</td>
                             </tr>
                             <tr id="row-ack">
                                 <td><span class="step-badge">3</span></td>
                                 <td><strong class="font-code text-green">ACK</strong></td>
                                 <td>Client &rarr; Server</td>
-                                <td class="font-code">1001</td>
-                                <td class="font-code text-yellow">5001</td>
-                                <td>Ack = 5000 + 1 (Acknowledge server's SYN, which consumes 1 sequence number).</td>
+                                <td class="font-code" id="table-ack-seq">1001</td>
+                                <td class="font-code text-yellow" id="table-ack-ack">5001</td>
+                                <td>Ack = Server ISN + 1 (Acknowledges server SYN byte). Connection fully established!</td>
                             </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: MySQL Live Handshake Records -->
+        <section class="card mysql-records-card" style="margin-top: 1.5rem;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div class="card-title-group">
+                    <span class="card-icon">&#128452;</span>
+                    <div>
+                        <h2 class="card-title" style="margin-bottom: 0.15rem;">MySQL Database Handshake Records</h2>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                            Live socket metrics persisted in MySQL table <code style="color: var(--accent-cyan); background: rgba(56,189,248,0.1); padding: 1px 6px; border-radius: 4px;">live_tcp_handshakes</code>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.6rem; align-items: center;">
+                    <span class="badge badge-subtle" id="db-engine-badge" style="border-color: rgba(16,185,129,0.3); color: #34d399;">
+                        MySQL: tcp_simulator_db
+                    </span>
+                    <button id="btn-refresh-db" class="btn btn-outline btn-sm" title="Reload live handshake records from MySQL">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                        </svg>
+                        Refresh MySQL Logs
+                    </button>
+                    <button id="btn-clear-db" class="btn btn-outline btn-sm" style="color: #f87171; border-color: rgba(248,113,113,0.3);" title="Clear database log table">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Clear Logs
+                    </button>
+                </div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="mysql-table-wrapper" style="overflow-x: auto; max-height: 420px;">
+                    <table class="mysql-records-table">
+                        <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th>User</th>
+                                <th>Client Endpoint</th>
+                                <th>Server Endpoint</th>
+                                <th>Client ISN</th>
+                                <th>Server ISN</th>
+                                <th>SYN-ACK Num</th>
+                                <th>Final ACK Num</th>
+                                <th>RTT (Latency)</th>
+                                <th>Socket Status</th>
+                                <th>Logged At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="db-records-tbody">
+                            <tr><td colspan="11" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Loading live handshake logs from MySQL...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -585,12 +643,12 @@
     <footer class="app-footer">
         <div class="footer-container">
             <div class="footer-left">
-                <strong>TCP Three-Way Handshake Simulator</strong> &bull; Computer Networks Lab Mini Project
+                <strong>Live TCP Three-Way Handshake System</strong> &bull; Computer Networks Lab Mini Project with MySQL
             </div>
             <div class="footer-right">
-                <span class="keyboard-tip"><kbd>Space</kbd> Start / Next Step</span>
+                <span class="keyboard-tip"><kbd>Space</kbd> Execute / Next Step</span>
                 <span class="keyboard-tip"><kbd>R</kbd> Reset</span>
-                <span class="keyboard-tip"><kbd>F</kbd> Fail Test</span>
+                <span class="keyboard-tip"><kbd>F</kbd> Timeout Test</span>
             </div>
         </div>
     </footer>

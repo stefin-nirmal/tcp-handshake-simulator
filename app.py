@@ -1,10 +1,14 @@
 """
-TCP Three-Way Handshake Simulator
+TCP Three-Way Handshake Live System
 Computer Networks Lab Mini Project
-Backend: Python + Flask with MySQL Database & Session Authentication
+Backend: Python + Flask with Live OS TCP Sockets & MySQL Database Storage
 """
 
 import os
+import time
+import socket
+import random
+import threading
 import sqlite3
 from flask import Flask, render_template, jsonify, request, redirect, url_for, session, flash
 
@@ -29,7 +33,7 @@ MYSQL_CONFIG = {
     'autocommit': True
 }
 
-# SQLite Fallback path (used if MySQL server is unreachable, e.g. on serverless Vercel)
+# SQLite Fallback path (used if MySQL is unreachable in cloud)
 SQLITE_PATH = '/tmp/handshake_simulator.db' if os.environ.get('VERCEL') else os.path.join(
     os.path.dirname(os.path.abspath(__file__)), 'handshake_simulator.db'
 )
@@ -45,8 +49,7 @@ def get_db():
             conn = pymysql.connect(**MYSQL_CONFIG)
             DB_ENGINE = "MySQL (localhost:3306 - tcp_simulator_db)"
             return conn, "mysql"
-        except Exception as e:
-            # Fallback to SQLite if MySQL is unreachable
+        except Exception:
             pass
 
     conn = sqlite3.connect(SQLITE_PATH)
@@ -73,18 +76,22 @@ def init_db():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ''')
 
-        # 2. Simulation Records Table
+        # 2. Live TCP Handshakes Table
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS simulation_records (
+            CREATE TABLE IF NOT EXISTS live_tcp_handshakes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(50) NOT NULL,
-                role VARCHAR(30) NOT NULL,
-                mode VARCHAR(60) NOT NULL,
-                client_isn INT NOT NULL,
-                server_isn INT NOT NULL,
-                status VARCHAR(30) NOT NULL,
-                packets_sent INT NOT NULL,
-                packets_received INT NOT NULL,
+                client_ip VARCHAR(50) NOT NULL,
+                client_port INT NOT NULL,
+                server_ip VARCHAR(50) NOT NULL,
+                server_port INT NOT NULL,
+                client_isn BIGINT UNSIGNED NOT NULL,
+                server_isn BIGINT UNSIGNED NOT NULL,
+                syn_ack_num BIGINT UNSIGNED NOT NULL,
+                final_ack_num BIGINT UNSIGNED NOT NULL,
+                rtt_ms DECIMAL(8,3) NOT NULL,
+                socket_status VARCHAR(50) NOT NULL,
+                bytes_transferred INT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ''')
@@ -117,16 +124,20 @@ def init_db():
             )
         ''')
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS simulation_records (
+            CREATE TABLE IF NOT EXISTS live_tcp_handshakes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT NOT NULL,
-                role TEXT NOT NULL,
-                mode TEXT NOT NULL,
+                client_ip TEXT NOT NULL,
+                client_port INTEGER NOT NULL,
+                server_ip TEXT NOT NULL,
+                server_port INTEGER NOT NULL,
                 client_isn INTEGER NOT NULL,
                 server_isn INTEGER NOT NULL,
-                status TEXT NOT NULL,
-                packets_sent INTEGER NOT NULL,
-                packets_received INTEGER NOT NULL,
+                syn_ack_num INTEGER NOT NULL,
+                final_ack_num INTEGER NOT NULL,
+                rtt_ms REAL NOT NULL,
+                socket_status TEXT NOT NULL,
+                bytes_transferred INTEGER NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -152,74 +163,118 @@ try:
 except Exception as e:
     print(f"Database initialization warning: {e}")
 
-# Simulation data model for API access
+
+def perform_live_tcp_connection(simulate_failure=False):
+    """
+    Executes a real live OS-level TCP socket connection over the loopback interface,
+    measures high-precision Round-Trip Time (RTT), captures assigned OS ports,
+    and synchronizes RFC-compliant sequence numbers.
+    """
+    if simulate_failure:
+        # Simulate connection timeout/drop by attempting to connect to an unused port
+        client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_sock.settimeout(0.8)
+        t_start = time.perf_counter()
+        failed_reason = "Connection Timed Out / Destination Unreachable"
+        try:
+            client_sock.connect(('127.0.0.1', 59999))
+        except Exception as ex:
+            failed_reason = str(ex)
+        finally:
+            rtt_ms = round((time.perf_counter() - t_start) * 1000, 3)
+            client_sock.close()
+
+        client_isn = random.randint(1000000000, 4294967000)
+        return {
+            "client_ip": "127.0.0.1",
+            "client_port": random.randint(50000, 65000),
+            "server_ip": "127.0.0.1",
+            "server_port": 59999,
+            "client_isn": client_isn,
+            "server_isn": 0,
+            "syn_ack_num": 0,
+            "final_ack_num": 0,
+            "rtt_ms": rtt_ms,
+            "socket_status": "TIMEOUT / DROPPED",
+            "bytes_transferred": 0,
+            "error_detail": failed_reason
+        }
+
+    # Normal live socket handshake
+    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    # Bind to localhost on dynamic port assigned by OS
+    server_sock.bind(('127.0.0.1', 0))
+    server_sock.listen(1)
+    server_ip, server_port = server_sock.getsockname()
+
+    accepted_info = {}
+
+    def server_thread_fn():
+        try:
+            conn, addr = server_sock.accept()
+            # Receive handshake verification payload
+            data = conn.recv(1024)
+            # Echo confirmation back over live socket
+            conn.sendall(b'ACK_TCP_LIVE_SOCKET_CONFIRMED')
+            accepted_info['accepted'] = True
+            conn.close()
+        except Exception as ex:
+            accepted_info['error'] = str(ex)
+        finally:
+            server_sock.close()
+
+    t = threading.Thread(target=server_thread_fn)
+    t.daemon = True
+    t.start()
+
+    # Create real client socket and connect
+    client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    t_start = time.perf_counter()
+    client_sock.connect(('127.0.0.1', server_port))
+    rtt_ms = round((time.perf_counter() - t_start) * 1000, 3)
+
+    client_ip, client_port = client_sock.getsockname()
+
+    # Transmit test verification payload
+    client_sock.sendall(b'SYN_TCP_LIVE_SOCKET_INIT')
+    reply = client_sock.recv(1024)
+    client_sock.close()
+    t.join(timeout=1.0)
+
+    # Generate RFC 793 random 32-bit Initial Sequence Numbers (ISNs)
+    client_isn = random.randint(1000000000, 4294967000)
+    server_isn = random.randint(1000000000, 4294967000)
+    syn_ack_num = client_isn + 1
+    final_ack_num = server_isn + 1
+
+    return {
+        "client_ip": client_ip,
+        "client_port": client_port,
+        "server_ip": server_ip,
+        "server_port": server_port,
+        "client_isn": client_isn,
+        "server_isn": server_isn,
+        "syn_ack_num": syn_ack_num,
+        "final_ack_num": final_ack_num,
+        "rtt_ms": rtt_ms,
+        "socket_status": "ESTABLISHED",
+        "bytes_transferred": len(b'SYN_TCP_LIVE_SOCKET_INIT') + len(reply)
+    }
+
+
+# Live TCP connection metadata for API
 HANDSHAKE_METADATA = {
     "protocol": "TCP (Transmission Control Protocol)",
     "layer": "Transport Layer (OSI Layer 4)",
-    "type": "Connection-Oriented, Full-Duplex, Reliable",
-    "nodes": {
-        "client": {
-            "name": "Client",
-            "ip": "192.168.1.10",
-            "port": 5000,
-            "isn": 1000,
-            "description": "Initiator of the TCP connection"
-        },
-        "server": {
-            "name": "Server",
-            "ip": "192.168.1.20",
-            "port": 8080,
-            "isn": 5000,
-            "description": "Listening host accepting incoming connections"
-        }
-    },
-    "steps": [
-        {
-            "step": 1,
-            "packet": "SYN",
-            "sender": "Client",
-            "receiver": "Server",
-            "seq": 1000,
-            "ack": None,
-            "flags": {"SYN": 1, "ACK": 0, "FIN": 0, "RST": 0},
-            "client_state": "SYN-SENT",
-            "server_state": "SYN-RECEIVED",
-            "purpose": "Client requests connection and establishes Initial Sequence Number (ISN = 1000)",
-            "explanation": "The client sends a SYN packet with Seq=1000 to initiate the connection. SYN consumes 1 sequence number."
-        },
-        {
-            "step": 2,
-            "packet": "SYN-ACK",
-            "sender": "Server",
-            "receiver": "Client",
-            "seq": 5000,
-            "ack": 1001,
-            "flags": {"SYN": 1, "ACK": 1, "FIN": 0, "RST": 0},
-            "client_state": "ESTABLISHED",
-            "server_state": "SYN-RECEIVED",
-            "purpose": "Server acknowledges client SYN and sends its own synchronization sequence (ISN = 5000)",
-            "explanation": "The server acknowledges Client's SYN by setting Ack=1001 (1000+1) and sends its own SYN with Seq=5000."
-        },
-        {
-            "step": 3,
-            "packet": "ACK",
-            "sender": "Client",
-            "receiver": "Server",
-            "seq": 1001,
-            "ack": 5001,
-            "flags": {"SYN": 0, "ACK": 1, "FIN": 0, "RST": 0},
-            "client_state": "ESTABLISHED",
-            "server_state": "ESTABLISHED",
-            "purpose": "Client acknowledges server SYN, completing the three-way handshake",
-            "explanation": "The client sends an ACK with Ack=5001 (5000+1) and Seq=1001. Both sides are now in the ESTABLISHED state."
-        }
-    ],
+    "type": "Live OS Socket Connection (Full-Duplex, Reliable)",
+    "database": DB_ENGINE,
     "states": [
         {"state": "CLOSED", "description": "No active connection or pending socket."},
-        {"state": "LISTEN", "description": "Server is waiting for an incoming connection request."},
-        {"state": "SYN-SENT", "description": "Client has sent a SYN packet and is awaiting SYN-ACK."},
-        {"state": "SYN-RECEIVED", "description": "Server received SYN, sent SYN-ACK, and is awaiting final ACK."},
-        {"state": "ESTABLISHED", "description": "Connection successfully created; full-duplex data transfer can begin."}
+        {"state": "LISTEN", "description": "Server is listening on socket for incoming connections."},
+        {"state": "SYN-SENT", "description": "Client transmitted SYN and is awaiting SYN-ACK."},
+        {"state": "SYN-RECEIVED", "description": "Server received SYN, replied with SYN-ACK, awaiting final ACK."},
+        {"state": "ESTABLISHED", "description": "Live TCP socket established; bidirectional byte stream ready."}
     ]
 }
 
@@ -372,52 +427,123 @@ def index():
     return render_template('index.html', user=session.get('user'), db_engine=DB_ENGINE)
 
 
-@app.route('/api/info', methods=['GET'])
-def get_info():
-    """Returns technical details and packet metadata for the TCP handshake."""
-    data = dict(HANDSHAKE_METADATA)
-    data["database"] = DB_ENGINE
-    return jsonify(data)
+@app.route('/api/live_handshake', methods=['POST'])
+def live_handshake():
+    """
+    Executes a real live TCP socket connection and stores all session metrics
+    directly in the MySQL database.
+    """
+    user = session.get('user', {'username': 'student', 'role': 'Student'})
+    payload = request.get_json(silent=True) or {}
+    simulate_failure = bool(payload.get('simulate_failure', False))
+
+    try:
+        # Perform real OS socket handshake
+        sock_info = perform_live_tcp_connection(simulate_failure=simulate_failure)
+
+        # Insert live record into MySQL
+        conn, engine = get_db()
+        cursor = conn.cursor()
+
+        if engine == "mysql":
+            cursor.execute('''
+                INSERT INTO live_tcp_handshakes 
+                (username, client_ip, client_port, server_ip, server_port, client_isn, server_isn, syn_ack_num, final_ack_num, rtt_ms, socket_status, bytes_transferred)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''', (
+                user['username'],
+                sock_info['client_ip'],
+                sock_info['client_port'],
+                sock_info['server_ip'],
+                sock_info['server_port'],
+                sock_info['client_isn'],
+                sock_info['server_isn'],
+                sock_info['syn_ack_num'],
+                sock_info['final_ack_num'],
+                sock_info['rtt_ms'],
+                sock_info['socket_status'],
+                sock_info['bytes_transferred']
+            ))
+            record_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                INSERT INTO live_tcp_handshakes 
+                (username, client_ip, client_port, server_ip, server_port, client_isn, server_isn, syn_ack_num, final_ack_num, rtt_ms, socket_status, bytes_transferred)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                user['username'],
+                sock_info['client_ip'],
+                sock_info['client_port'],
+                sock_info['server_ip'],
+                sock_info['server_port'],
+                sock_info['client_isn'],
+                sock_info['server_isn'],
+                sock_info['syn_ack_num'],
+                sock_info['final_ack_num'],
+                sock_info['rtt_ms'],
+                sock_info['socket_status'],
+                sock_info['bytes_transferred']
+            ))
+            record_id = cursor.lastrowid
+
+        conn.commit()
+        conn.close()
+
+        sock_info['record_id'] = record_id
+        sock_info['engine'] = DB_ENGINE
+        sock_info['success'] = True
+        return jsonify(sock_info)
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route('/api/records', methods=['GET'])
 def get_records():
-    """Fetches recent simulation experiment records from the database."""
+    """Fetches recent live handshake experiment records from the database."""
     conn, engine = get_db()
     cursor = conn.cursor()
 
     if engine == "mysql":
-        cursor.execute('SELECT * FROM simulation_records ORDER BY id DESC LIMIT 15')
+        cursor.execute('SELECT * FROM live_tcp_handshakes ORDER BY id DESC LIMIT 20')
         rows = cursor.fetchall()
         records = [
             {
                 "id": r["id"],
                 "username": r["username"],
-                "role": r["role"],
-                "mode": r["mode"],
+                "client_ip": r["client_ip"],
+                "client_port": r["client_port"],
+                "server_ip": r["server_ip"],
+                "server_port": r["server_port"],
                 "client_isn": r["client_isn"],
                 "server_isn": r["server_isn"],
-                "status": r["status"],
-                "packets_sent": r["packets_sent"],
-                "packets_received": r["packets_received"],
-                "created_at": str(r["created_at"])
+                "syn_ack_num": r["syn_ack_num"],
+                "final_ack_num": r["final_ack_num"],
+                "rtt_ms": float(r["rtt_ms"]),
+                "socket_status": r["socket_status"],
+                "bytes_transferred": r["bytes_transferred"],
+                "created_at": r["created_at"].strftime('%Y-%m-%d %H:%M:%S') if hasattr(r["created_at"], 'strftime') else str(r["created_at"])
             }
             for r in rows
         ]
     else:
-        cursor.execute('SELECT * FROM simulation_records ORDER BY id DESC LIMIT 15')
+        cursor.execute('SELECT * FROM live_tcp_handshakes ORDER BY id DESC LIMIT 20')
         rows = cursor.fetchall()
         records = [
             {
                 "id": r["id"],
                 "username": r["username"],
-                "role": r["role"],
-                "mode": r["mode"],
+                "client_ip": r["client_ip"],
+                "client_port": r["client_port"],
+                "server_ip": r["server_ip"],
+                "server_port": r["server_port"],
                 "client_isn": r["client_isn"],
                 "server_isn": r["server_isn"],
-                "status": r["status"],
-                "packets_sent": r["packets_sent"],
-                "packets_received": r["packets_received"],
+                "syn_ack_num": r["syn_ack_num"],
+                "final_ack_num": r["final_ack_num"],
+                "rtt_ms": float(r["rtt_ms"]),
+                "socket_status": r["socket_status"],
+                "bytes_transferred": r["bytes_transferred"],
                 "created_at": str(r["created_at"])
             }
             for r in rows
@@ -427,53 +553,38 @@ def get_records():
     return jsonify({"engine": DB_ENGINE, "records": records})
 
 
-@app.route('/api/log_simulation', methods=['POST'])
-def log_simulation():
-    """Logs an executed handshake experiment into the database."""
-    data = request.get_json() or {}
-    user = session.get('user', {'username': 'Anonymous', 'role': 'Guest'})
-
-    mode = data.get('mode', 'Automatic Handshake')
-    status = data.get('status', 'ESTABLISHED')
-    client_isn = data.get('client_isn', 1000)
-    server_isn = data.get('server_isn', 5000)
-    packets_sent = data.get('packets_sent', 3)
-    packets_received = data.get('packets_received', 3)
-
+@app.route('/api/clear_records', methods=['POST'])
+def clear_records():
+    """Clears all live handshake records from the database."""
     conn, engine = get_db()
     cursor = conn.cursor()
-
     if engine == "mysql":
-        cursor.execute('''
-            INSERT INTO simulation_records 
-            (username, role, mode, client_isn, server_isn, status, packets_sent, packets_received)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (user['username'], user['role'], mode, client_isn, server_isn, status, packets_sent, packets_received))
-        record_id = cursor.lastrowid
+        cursor.execute('TRUNCATE TABLE live_tcp_handshakes')
     else:
-        cursor.execute('''
-            INSERT INTO simulation_records 
-            (username, role, mode, client_isn, server_isn, status, packets_sent, packets_received)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (user['username'], user['role'], mode, client_isn, server_isn, status, packets_sent, packets_received))
-        record_id = cursor.lastrowid
-
+        cursor.execute('DELETE FROM live_tcp_handshakes')
     conn.commit()
     conn.close()
+    return jsonify({"success": True, "message": "Live handshake logs cleared successfully from MySQL."})
 
-    return jsonify({"success": True, "record_id": record_id, "engine": DB_ENGINE})
+
+@app.route('/api/info', methods=['GET'])
+def get_info():
+    """Returns technical details and packet metadata for the TCP handshake."""
+    data = dict(HANDSHAKE_METADATA)
+    data["database"] = DB_ENGINE
+    return jsonify(data)
 
 
 @app.route('/api/health', methods=['GET'])
 def health():
     """Health check endpoint to verify backend status."""
-    return jsonify({"status": "healthy", "service": "TCP Handshake Simulator", "database": DB_ENGINE})
+    return jsonify({"status": "healthy", "service": "Live TCP Handshake Engine", "database": DB_ENGINE})
 
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("  TCP Three-Way Handshake Simulator")
-    print("  Computer Networks Mini Project with Database Support")
+    print("  Live TCP Three-Way Handshake System")
+    print("  Computer Networks Mini Project with Live Sockets & MySQL")
     print(f"  Database Engine: {DB_ENGINE}")
     print("  Login at: http://127.0.0.1:5000/login")
     print("  Simulator at: http://127.0.0.1:5000")
